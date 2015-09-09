@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/kinesis"
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -57,6 +58,7 @@ type AWSClient struct {
 	kinesisconn     *kinesis.Kinesis
 	elasticacheconn *elasticache.ElastiCache
 	lambdaconn      *lambda.Lambda
+	kmsconn         *kms.KMS
 }
 
 // Client configures and returns a fully initialized AWSClient
@@ -156,6 +158,9 @@ func (c *Config) Client() (interface{}, error) {
 
 		log.Println("[INFO] Initializing CloudWatch SDK connection")
 		client.cloudwatchconn = cloudwatch.New(awsConfig)
+
+		log.Println("[INFO] Initializing KMS connection")
+		client.kmsconn = kms.New(awsConfig)
 	}
 
 	if len(errs) > 0 {
