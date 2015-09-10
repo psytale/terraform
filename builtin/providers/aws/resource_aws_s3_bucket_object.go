@@ -74,6 +74,12 @@ func resourceAwsS3BucketObject() *schema.Resource {
 				ConflictsWith: []string{"source"},
 			},
 
+			"kms_encryption_key": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"etag": &schema.Schema{
 				Type: schema.TypeString,
 				// This will conflict with SSE-C and SSE-KMS encryption and multi-part upload
@@ -141,6 +147,11 @@ func resourceAwsS3BucketObjectPut(d *schema.ResourceData, meta interface{}) erro
 
 	if v, ok := d.GetOk("content_disposition"); ok {
 		putInput.ContentDisposition = aws.String(v.(string))
+	}
+
+	if v, exists := d.GetOk("kms_encryption_key"); exists {
+		putInput.SSEKMSKeyId = aws.String(v.(string))
+		putInput.ServerSideEncryption = aws.String("aws:kms")
 	}
 
 	resp, err := s3conn.PutObject(putInput)
