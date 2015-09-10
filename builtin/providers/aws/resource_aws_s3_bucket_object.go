@@ -38,6 +38,12 @@ func resourceAwsS3BucketObject() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"kms_encryption_key": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"etag": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -59,12 +65,18 @@ func resourceAwsS3BucketObjectPut(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("Error opening S3 bucket object source (%s): %s", source, err)
 	}
 
-	resp, err := s3conn.PutObject(
-		&s3.PutObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-			Body:   file,
-		})
+	req := s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   file,
+	}
+
+	if v, exists := d.GetOk("kms_encryption_key"); exists {
+		req.SSEKMSKeyId = aws.String(v.(string))
+		req.ServerSideEncryption = aws.String("aws:kms")
+	}
+
+	resp, err := s3conn.PutObject(&req)
 
 	if err != nil {
 		return fmt.Errorf("Error putting object in S3 bucket (%s): %s", bucket, err)
